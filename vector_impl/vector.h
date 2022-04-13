@@ -24,6 +24,12 @@ bool operator==(const vector<T>& lhs, const vector<T>& rhs)
 	return false;
 }
 
+template <class T>
+bool operator!=(const vector<T>& lhs, const vector<T>& rhs)
+{
+	return !(lhs == rhs);
+}
+
 //TODO: impl others operators
 
 template <class T> //add class Allocator = std::allocator<T>
@@ -246,7 +252,7 @@ public:
 	vector(const vector& other)
 		: vector(other.size())
 	{
-		std::memcpy(other._data.get(), _data.get(), sizeof(T) * _size);
+		std::memcpy(_data.get(), other._data.get(), sizeof(T) * _size);
 	}
 
 	vector(vector&& other) noexcept
@@ -258,22 +264,19 @@ public:
 		other._capacity = 0;
 	}
 
-	template <class InputIt>
-	vector(InputIt first, InputIt last)
-		: _data(nullptr)
-		, _size(0), _capacity(0)
+	vector(iterator first, iterator last)
+		: _data(std::make_unique<T[]>(last.Ptr() - first.Ptr()))
+		, _size(0)
 	{
-		ptrdiff_t dist = std::distance(first, last);
-		
-		_data = std::make_unique<T[]>(dist);
-
+		ptrdiff_t diff = last.Ptr() - first.Ptr();
+		_capacity = diff + diff / 2;
 		for (; first != last; ++first)
 		{
 			emplace_back(*first);
 		}
 	}
 
-	template <class _Ty> 
+	template <class _Ty>
 	vector(const std::initializer_list<_Ty>& list)
 		: _data(new T[list.size() + list.size() / 2])
 		, _size(list.size()), _capacity(list.size() + list.size() / 2)
@@ -283,7 +286,7 @@ public:
 
 	vector<T>& operator=(const vector& other)
 	{
-		if (other != *this)
+		if (&other != this)
 		{
 			_size = other._size;
 			_capacity = other._capacity;
@@ -398,7 +401,7 @@ public:
 		{
 			T* temp = new T[size]();
 			if (_data.get() != nullptr)
-			std::memcpy(temp, _data.get(), sizeof(T) * _size); //sizeof(what???)
+				std::memcpy(temp, _data.get(), sizeof(T) * _size); //sizeof(what???)
 
 			_data.reset(temp);
 			_capacity = size;
@@ -422,23 +425,30 @@ public:
 
 	//Modifiers
 	void clear()
-	{}
+	{
+		
+	}
 	//insert() and emplace() dunno how to impl
 	//void erase(iterator first, iterator last);
-	void push_back(const T& val)
-	{
-		if (_size >= _capacity)
-		{
-			reserve(_capacity + 5);
-		}
-			
-		_data.get()[_size] = val;
-		++_size;
-	}
-	template <class ...Args>
-	void emplace_back(Args&&... args)
-	{
 
+	template <class ...Args>
+	T& emplace_back(Args&&... args)
+	{
+		if (_size == _capacity)
+		{
+			reserve(_size + _size / 2);
+		}
+		return *new (_data.get() + _size++) T(std::forward<Args>(args)...);
+	}
+
+	T& push_back(const T&& val)
+	{
+		return emplace_back(std::move(val));
+	}
+
+	T& push_back(const T& val)
+	{
+		return emplace_back(val);
 	}
 
 	void pop_back()

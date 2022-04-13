@@ -10,17 +10,6 @@
 
 int main()
 {
-	std::vector<int> t;
-	std::vector<int> a(t.begin(), t.end());
-	//std::vector<int> test(10, 2);
-	//ptrdiff_t diff = test.begin()._Ptr - test.end()._Ptr;
-	//
-	//test.begin()._Ptr = nullptr;
-	//
-	//std::cout << diff << std::endl;
-	//std::cout << sizeof(test) << " "
-	//	<< sizeof(int) * 10;
-
 	TestRunner tr;
 	RUN_TEST(tr, ConstructorsTests);
 	RUN_TEST(tr, ElementAccessTests);

@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Tests.h"
 
 void ConstructorsTests()
@@ -75,11 +76,6 @@ void ConstructorsTests()
 		vector<int> c(a);
 		std::initializer_list<vector<int>> l = { a, b ,c };
 
-		for (auto it = l.begin(); it != l.end(); ++it)
-		{
-			it->front();
-		}
-
 		vector<vector<int>> vec = l;
 		
 		Assert(vec.size() == 3 && vec.capacity() == 4,
@@ -91,10 +87,36 @@ void ConstructorsTests()
 				"Verifying matrix correctness.");
 		}
 	}
+	{
+		size_t size = 10;
+		int default_val = 1;
+		vector<int> a(size, default_val);
+
+		vector<int> b(a.begin(), a.end());
+
+		Assert(a == b && a.data() != b.data(),
+			"constructor with iterators as params.");
+	}
+	{
+		vector<std::string> strs{ "First", "Second", "Third" };
+		std::stringstream os;
+
+		for (const auto& str : strs)
+		{
+			os << str << "\n";
+		}
+
+		Assert(os.str() == "First\nSecond\nThird\n",
+			"Some vector containing std::string.");
+	}
 }
 
 void ElementAccessTests()
-{}
+{
+	{
+		vector<int> a;
+	}
+}
 
 void IteratorsTests()
 {}
