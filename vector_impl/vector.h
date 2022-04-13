@@ -59,16 +59,16 @@ public:
 			this->_ptr += pos;
 			return *this;
 		}
-		iterator operator++()
+		iterator& operator++()
+		{
+			++this->_ptr;
+			return *this;
+		}
+		iterator operator++(int junk)
 		{
 			iterator p = *this;
 			++this->_ptr;
 			return p;
-		}
-		iterator& operator++(int junk)
-		{
-			++this->_ptr;
-			return *this;
 		}
 		iterator& operator-=(size_t pos)
 		{
@@ -80,16 +80,16 @@ public:
 			this->_ptr -= pos;
 			return *this;
 		}
-		iterator operator--()
+		iterator& operator--()
+		{
+			--this->_ptr;
+			return *this;
+		}
+		iterator& operator--(int junk)
 		{
 			iterator p = *this;
 			--this->_ptr;
 			return p;
-		}
-		iterator& operator--(int junk)
-		{
-			--this->_ptr;
-			return *this;
 		}
 		reference operator*() const
 		{
@@ -130,7 +130,6 @@ public:
 	private:
 		pointer _ptr;
 	};
-
 	class const_iterator
 	{
 	public:
@@ -145,7 +144,7 @@ public:
 		{}
 
 		const_iterator(const iterator& It)
-			: _ptr(It.operator->())
+			: _ptr(It.Ptr())
 		{
 		}
 
@@ -159,16 +158,16 @@ public:
 			this->_ptr += pos;
 			return *this;
 		}
-		const_iterator operator++()
+		const_iterator& operator++()
+		{
+			++this->_ptr;
+			return *this;
+		}
+		const_iterator operator++(int junk)
 		{
 			const_iterator p = *this;
 			++this->_ptr;
 			return p;
-		}
-		const_iterator& operator++(int junk)
-		{
-			++this->_ptr;
-			return *this;
 		}
 		const_iterator& operator-=(size_t pos)
 		{
@@ -180,16 +179,16 @@ public:
 			this->_ptr -= pos;
 			return *this;
 		}
-		const_iterator operator--()
-		{
-			const_iterator p = *this;
-			--this->_ptr;
-
-		}
-		const_iterator& operator--(int junk)
+		const_iterator& operator--()
 		{
 			--this->_ptr;
 			return *this;
+		}
+		const_iterator operator--(int junk)
+		{
+			iterator p = *this;
+			--this->_ptr;
+			return p;
 		}
 		const reference operator*() const
 		{
@@ -236,25 +235,21 @@ public:
 		: _data(nullptr)
 		, _size(0), _capacity(0)
 	{}
-
 	explicit vector(size_t size)
 		: _data(std::make_unique<T[]>(size + size / 2))
 		, _size(size), _capacity(size + size / 2)
 	{}
-
 	vector(size_t size, const T& by_def)
 		: _data(std::make_unique<T[]>(size + size / 2))
 		, _size(size), _capacity(size + size / 2)
 	{
 		std::fill(begin(), end(), by_def);
 	}
-
 	vector(const vector& other)
 		: vector(other.size())
 	{
 		std::memcpy(_data.get(), other._data.get(), sizeof(T) * _size);
 	}
-
 	vector(vector&& other) noexcept
 		: _data(other._data.get())
 		, _size(other._size), _capacity(other._capacity)
@@ -263,7 +258,6 @@ public:
 		other._size = 0;
 		other._capacity = 0;
 	}
-
 	vector(iterator first, iterator last)
 		: _data(std::make_unique<T[]>(last.Ptr() - first.Ptr()))
 		, _size(0)
@@ -275,7 +269,6 @@ public:
 			emplace_back(*first);
 		}
 	}
-
 	template <class _Ty>
 	vector(const std::initializer_list<_Ty>& list)
 		: _data(new T[list.size() + list.size() / 2])
@@ -283,7 +276,6 @@ public:
 	{
 		std::copy(list.begin(), list.end(), begin());
 	}
-
 	vector<T>& operator=(const vector& other)
 	{
 		if (&other != this)
@@ -295,7 +287,6 @@ public:
 		}
 		return *this;
 	}
-
 	vector<T>& operator=(vector&& other) noexcept
 	{
 		_data.reset(other._data.get());
@@ -326,17 +317,14 @@ public:
 		}
 		return _data[pos];
 	}
-
 	T& operator[](size_t pos)
 	{
 		return _data[pos];
 	}
-
 	const T& operator[](size_t pos) const
 	{
 		return _data[pos];
 	}
-
 	T& front()
 	{
 		return *begin();
@@ -345,7 +333,6 @@ public:
 	{
 		return *cbegin();
 	}
-
 	T& back()
 	{
 		return *std::prev(end());
@@ -394,15 +381,15 @@ public:
 	{
 		return _size;
 	}
-
 	void reserve(size_t size)
 	{
 		if (_capacity <= size)
 		{
-			T* temp = new T[size]();
+			T* temp = new T[size];
 			if (_data.get() != nullptr)
+			{
 				std::memcpy(temp, _data.get(), sizeof(T) * _size); //sizeof(what???)
-
+			}
 			_data.reset(temp);
 			_capacity = size;
 		}
@@ -426,8 +413,36 @@ public:
 	//Modifiers
 	void clear()
 	{
-		
+		T* first = begin().Ptr();
+		T* last = end().Ptr();
+
+		for (; first != last; ++first)
+		{
+			first->~T();
+		}
+		_size = 0;
 	}
+
+	iterator insert(iterator it, const T& val)
+	{
+		ptrdiff_t diff = it.Ptr() - begin().Ptr();
+
+		if (++_size == _capacity)
+		{
+			reserve(_size + 100);
+		}
+		
+		T* pos = begin().Ptr() + diff;
+		T* last = end().Ptr();
+		for (; last != pos; --last)
+		{
+			*last = std::move(*std::prev(last));
+		}
+		*(begin().Ptr() + diff) = val;
+
+		return begin() + diff;
+	}
+	//todo: add insert(iterator first, iterator last, const T& val);
 	//insert() and emplace() dunno how to impl
 	//void erase(iterator first, iterator last);
 

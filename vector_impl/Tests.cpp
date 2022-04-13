@@ -114,15 +114,159 @@ void ConstructorsTests()
 void ElementAccessTests()
 {
 	{
-		vector<int> a;
+		size_t size = 4;
+		vector<int> a(size);
+		const vector<int> b{0, 1, 2, 3};
+
+		for (size_t i = 0; i < size; ++i)
+		{
+			a[i] = i;
+		}
+
+		Assert(a.at(0) == 0 && a.at(1) == 1
+			&& a.at(2) == 2 && a.at(3) == 3,
+			"at() vector method.");
+		Assert(b.at(0) == 0 && b.at(1) == 1
+			&& b.at(2) == 2 && b.at(3) == 3,
+			"at() vector method.");
+		try
+		{
+			a.at(size);
+			Assert(false, "at() method throw exception");
+		}
+		catch (std::out_of_range& ex)
+		{}
+		catch (...)
+		{
+			Assert(false, "at() throw exception but not std::out_of_range.");
+		}
+
+		Assert(a[0] == 0 && a[1] == 1
+			&& a[2] == 2 && a[3] == 3,
+			"operator[] vector.");
+	}
+	{
+		vector<int> a = { 1, 2, 3, 4, 5 };
+		const vector<int> b = { 1, 2 };
+		Assert(a.front() == 1 && a.back() == 5
+			&& b.front() == 1 && b.back() == 2,
+			"front() and back() methods");
+	}
+	{
+		vector<int> a = { 1, 2, 3 };
+		const vector<int> b = { 1, 2, 3 };
+		auto ptr = a.data();
+		auto _ptr = b.data();
+		std::stringstream os, _os;
+
+		for (size_t i = 0; i < a.size(); ++i)
+		{
+			os << ptr[i];
+			_os << _ptr[i];
+		}
+
+		Assert(os.str() == "123" && _os.str() == "123",
+			"data() method.");
 	}
 }
 
+#define TYPE(x) #x
+
 void IteratorsTests()
-{}
+{
+	{
+		vector<int> a = { 1, 2, 3 };
+		const vector<int> b;
+
+		Assert(a.data() == a.begin().Ptr() && a.data() + 1 == (a.begin() + 1).Ptr()
+			&& a.data() + 2 == (a.begin() + 2).Ptr() && a.data() + 3 == a.end().Ptr(),
+			"begin/end methods");
+		Assert(b.cbegin().Ptr() == b.data() && b.data() == b.cend().Ptr(),
+			"cbegin/cend methods.");
+
+		std::stringstream os;
+		for (auto it = a.begin(); it != a.end(); ++it)
+		{
+			os << *it;
+		}
+		Assert(os.str() == "123",
+			"iterator operator*/operator++(int junk) + comparing iters.");
+	}
+}
 
 void CapacityTests()
-{}
+{
+	{
+		vector<int> a = { 1 }, b;
+
+		Assert(!a.empty() && b.empty(),
+			"empty method.");
+		Assert(a.size() == 1 && b.size() == 0,
+			"size method.");
+	}
+	{
+		vector<int> a = { 1, 2, 3, 4, 5, 6 };
+		std::stringstream os;
+		a.shrink_to_fit();
+
+		for (size_t i = 0; i < a.capacity(); ++i)
+		{
+			os << a[i];
+		}
+
+		Assert(os.str() == "123456" 
+			&& a.size() == a.capacity(),
+			"shrink_to_fit.");
+	}
+	{
+		vector<int> a;
+		a.reserve(100);
+
+		Assert(a.size() == 0 && a.capacity() == 100,
+			"reserve method.");
+	}
+}
 
 void ModifiersTests()
-{}
+{
+	{
+		vector<int> a = { 1, 1 };
+
+		a.clear();
+		Assert(a.size() == 0 && a.capacity() == 3
+			&& a.begin() == a.end(),
+			"clear method.");
+	}
+	{
+		std::stringstream os;
+		vector<int> a = {1, 2};
+		a.insert(a.begin(), 0);
+
+		for (size_t i = 0; i < a.size(); ++i)
+		{
+			os << a[i];
+		}
+		Assert(os.str() == "012",
+			"insert(begin()).");
+		
+		os.str("");
+		a.insert(a.end(), 3);
+
+		for (size_t i = 0; i < a.size(); ++i)
+		{
+			os << a[i];
+		}
+		Assert(os.str() == "0123",
+			"insert(end()).");
+
+		os.str("");
+		a.insert(++a.begin(), 3);
+
+		for (size_t i = 0; i < a.size(); ++i)
+		{
+			os << a[i];
+		}
+		Assert(os.str() == "03123",
+			"insert(somewhere inside array).");
+	}
+}
