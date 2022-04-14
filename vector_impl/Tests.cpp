@@ -120,7 +120,7 @@ void ElementAccessTests()
 
 		for (size_t i = 0; i < size; ++i)
 		{
-			a[i] = i;
+			a[i] = static_cast<int>(i);
 		}
 
 		Assert(a.at(0) == 0 && a.at(1) == 1
@@ -135,7 +135,9 @@ void ElementAccessTests()
 			Assert(false, "at() method throw exception");
 		}
 		catch (std::out_of_range& ex)
-		{}
+		{
+			std::cerr << ex.what() << '\n';
+		}
 		catch (...)
 		{
 			Assert(false, "at() throw exception but not std::out_of_range.");
@@ -247,7 +249,7 @@ void ModifiersTests()
 			os << a[i];
 		}
 		Assert(os.str() == "012",
-			"insert(begin()).");
+			"insert(begin(), val).");
 		
 		os.str("");
 		a.insert(a.end(), 3);
@@ -257,7 +259,7 @@ void ModifiersTests()
 			os << a[i];
 		}
 		Assert(os.str() == "0123",
-			"insert(end()).");
+			"insert(end(), val).");
 
 		os.str("");
 		a.insert(++a.begin(), 3);
@@ -267,6 +269,8 @@ void ModifiersTests()
 			os << a[i];
 		}
 		Assert(os.str() == "03123",
-			"insert(somewhere inside array).");
+			"insert(somewhere inside array, val).");
+
+
 	}
 }

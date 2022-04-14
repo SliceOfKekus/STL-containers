@@ -30,6 +30,54 @@ bool operator!=(const vector<T>& lhs, const vector<T>& rhs)
 	return !(lhs == rhs);
 }
 
+template <class T>
+bool operator>(const vector<T>& lhs, const vector<T>& rhs)
+{
+	if (lhs.size() == rhs.size())
+	{
+		for (size_t i = 0; i < lhs.size(); ++i)
+		{
+			if (lhs[i] <= rhs[i])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	return lhs.size() > rhs.size();
+}
+
+template <class T>
+bool operator<(const vector<T>& lhs, const vector<T>& rhs)
+{
+	if (lhs.size() == rhs.size())
+	{
+		for (size_t i = 0; i < lhs.size(); ++i)
+		{
+			if (lhs[i] >= rhs[i])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	return lhs.size() < rhs.size();
+}
+
+template <class T>
+bool operator<=(const vector<T>& lhs, const vector<T>& rhs)
+{
+	return !(lhs > rhs);
+}
+
+template <class T>
+bool operator>=(const vector<T>& lhs, const vector<T>& rhs)
+{
+	return !(lhs < rhs);
+}
+
 //TODO: impl others operators
 
 template <class T> //add class Allocator = std::allocator<T>
@@ -427,7 +475,7 @@ public:
 	{
 		ptrdiff_t diff = it.Ptr() - begin().Ptr();
 
-		if (++_size == _capacity)
+		if (++_size >= _capacity)
 		{
 			reserve(_size + 100);
 		}
@@ -442,9 +490,43 @@ public:
 
 		return begin() + diff;
 	}
-	//todo: add insert(iterator first, iterator last, const T& val);
-	//insert() and emplace() dunno how to impl
-	//void erase(iterator first, iterator last);
+	
+	template <typename ...Args>
+	iterator emplace(const_iterator pos, Args&&... args)
+	{
+		ptrdiff_t diff = pos.Ptr() - begin.Ptr();
+
+		if (++_size >= _capacity)
+		{
+			reserve(_size + 50);
+		}
+
+		pos = begin.Ptr() + diff;
+
+		for (auto _end = end(); _end != pos; --_end)
+		{
+			*_end == std::move(*std::prev(_end));
+		}
+
+		new (pos.Ptr()) T(std::forward<Args>(args)...);
+
+		return iterator(pos.Ptr());
+	}
+
+	void erase(const_iterator pos)
+	{
+		ptrdiff_t diff = pos.Ptr() - begin();
+
+		if (pos != end())
+		{
+			pos->~T();
+
+			for (auto insert = begin() + diff; insert != end(); ++insert)
+			{
+				*insert = std::move(*std::next(insert));
+			}
+		}
+	}
 
 	template <class ...Args>
 	T& emplace_back(Args&&... args)
